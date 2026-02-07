@@ -1,3 +1,4 @@
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -10,8 +11,8 @@ from structured_pricing.monte_carlo import price_option_mc_stats
 
 st.set_page_config(page_title="Structured Pricing MVP", page_icon="📈", layout="centered")
 
-st.title("Moteur simplifie de pricing")
-st.caption("Black-Scholes + decomposition des payoffs")
+st.title("Moteur simplifié de pricing")
+st.caption("Black-Scholes + décomposition des payoffs")
 
 if "spot" not in st.session_state:
     st.session_state.spot = 100.0
@@ -38,7 +39,7 @@ if "mc_show_table" not in st.session_state:
 if "mc_show_convergence" not in st.session_state:
     st.session_state.mc_show_convergence = False
 
-st.subheader("Donnees de marche")
+st.subheader("Données de marché")
 data_mode = st.radio(
     "Source",
     ("Saisie manuelle", "Yahoo Finance (auto)"),
@@ -58,13 +59,13 @@ if data_mode == "Yahoo Finance (auto)":
                 st.session_state.spot = snapshot.spot
                 st.session_state.volatility = snapshot.annualized_volatility
                 st.success(
-                    f"{snapshot.ticker} charge: spot={snapshot.spot:.4f}, sigma={snapshot.annualized_volatility:.4f}"
+                    f"{snapshot.ticker} chargé : spot={snapshot.spot:.4f}, sigma={snapshot.annualized_volatility:.4f}"
                 )
             except Exception as exc:
-                st.error(f"Erreur de chargement: {exc}")
+                st.error(f"Erreur de chargement : {exc}")
 
-st.subheader("Parametres Monte Carlo")
-with st.expander("Reglages MC", expanded=False):
+st.subheader("Paramètres Monte Carlo")
+with st.expander("Réglages MC", expanded=False):
     st.session_state.mc_enabled = st.checkbox("Activer Monte Carlo", value=st.session_state.mc_enabled)
     st.session_state.mc_paths = st.number_input(
         "Nombre de trajectoires",
@@ -85,10 +86,10 @@ with st.expander("Reglages MC", expanded=False):
         step=1,
     )
     st.session_state.mc_antithetic = st.checkbox(
-        "Antithetic variates (reduction variance)",
+        "Antithetic variates (réduction de variance)",
         value=st.session_state.mc_antithetic,
     )
-    st.session_state.mc_show_ci = st.checkbox("Afficher IC 95%", value=st.session_state.mc_show_ci)
+    st.session_state.mc_show_ci = st.checkbox("Afficher IC 95 %", value=st.session_state.mc_show_ci)
     st.session_state.mc_show_table = st.checkbox("Afficher tableau comparatif", value=st.session_state.mc_show_table)
     st.session_state.mc_show_convergence = st.checkbox(
         "Afficher convergence MC", value=st.session_state.mc_show_convergence
@@ -97,28 +98,28 @@ with st.expander("Reglages MC", expanded=False):
 product = st.selectbox(
     "Que voulez-vous pricer ?",
     (
-        "Obligation zero-coupon",
-        "Option Call europeenne",
-        "Option Put europeenne",
-        "Autocall simplifie",
+        "Obligation zéro-coupon",
+        "Option Call européenne",
+        "Option Put européenne",
+        "Autocall simplifié",
     ),
 )
 
-st.subheader("Parametres de marche")
+st.subheader("Paramètres de marché")
 spot = st.number_input("Spot (S0)", min_value=0.0001, step=1.0, key="spot")
-rate = st.number_input("Taux sans risque r (ex: 0.02)", step=0.005, format="%.4f", key="rate")
-volatility = st.number_input("Volatilite sigma (ex: 0.20)", min_value=0.0001, step=0.01, format="%.4f", key="volatility")
-maturity = st.number_input("Maturite T (annees)", min_value=0.0001, step=0.25, format="%.4f", key="maturity")
+rate = st.number_input("Taux sans risque r (ex : 0.02)", step=0.005, format="%.4f", key="rate")
+volatility = st.number_input("Volatilité sigma (ex : 0.20)", min_value=0.0001, step=0.01, format="%.4f", key="volatility")
+maturity = st.number_input("Maturité T (années)", min_value=0.0001, step=0.25, format="%.4f", key="maturity")
 
 result = None
 
-if product == "Obligation zero-coupon":
+if product == "Obligation zéro-coupon":
     if st.button("Calculer le prix"):
         result = zero_coupon_price(rate=rate, maturity=maturity)
-        st.success(f"Prix theorique (par nominal 1): {result:.6f}")
-        st.info("Interpretation: cout aujourd'hui d'un paiement certain de 1 a maturite.")
+        st.success(f"Prix théorique (par nominal 1) : {result:.6f}")
+        st.info("Interprétation : coût aujourd'hui d'un paiement certain de 1 à maturité.")
 
-elif product == "Option Call europeenne":
+elif product == "Option Call européenne":
     strike = st.number_input("Strike K", min_value=0.0001, value=100.0, step=1.0)
     if st.button("Calculer le prix"):
         result = price_call_bs(
@@ -128,8 +129,8 @@ elif product == "Option Call europeenne":
             volatility=volatility,
             maturity=maturity,
         )
-        st.success(f"Prix theorique du call: {result:.6f}")
-        st.info("Decomposition payoff: max(S_T - K, 0).")
+        st.success(f"Prix théorique du call : {result:.6f}")
+        st.info("Décomposition payoff : max(S_T - K, 0).")
 
         if st.session_state.mc_enabled:
             mc_price, mc_se, mc_low, mc_high = price_option_mc_stats(
@@ -147,28 +148,28 @@ elif product == "Option Call europeenne":
             col1, col2, col3 = st.columns(3)
             col1.metric("BS", f"{result:.6f}")
             col2.metric("MC", f"{mc_price:.6f}")
-            col3.metric("Ecart", f"{(mc_price - result):.6f}")
+            col3.metric("Écart", f"{(mc_price - result):.6f}")
             if st.session_state.mc_show_ci:
-                st.caption(f"IC 95% MC: [{mc_low:.6f} ; {mc_high:.6f}] | SE={mc_se:.6f}")
+                st.caption(f"IC 95 % MC : [{mc_low:.6f} ; {mc_high:.6f}] | SE={mc_se:.6f}")
 
             if st.session_state.mc_show_table:
                 table = pd.DataFrame(
                     [
-                        {"Modele": "Black-Scholes", "Prix": result, "SE": "", "IC95%": ""},
+                        {"Modèle": "Black-Scholes", "Prix": result, "SE": "", "IC95%": ""},
                         {
-                            "Modele": "Monte Carlo",
+                            "Modèle": "Monte Carlo",
                             "Prix": mc_price,
                             "SE": mc_se,
                             "IC95%": f"[{mc_low:.6f} ; {mc_high:.6f}]",
                         },
-                        {"Modele": "Ecart MC - BS", "Prix": mc_price - result, "SE": "", "IC95%": ""},
+                        {"Modèle": "Écart MC - BS", "Prix": mc_price - result, "SE": "", "IC95%": ""},
                     ]
                 )
                 st.dataframe(table, use_container_width=True, hide_index=True)
 
             if st.session_state.mc_show_convergence:
                 st.markdown("**Convergence Monte Carlo**")
-                st.caption("Peut prendre du temps si le nombre de trajectoires est eleve.")
+                st.caption("Peut prendre du temps si le nombre de trajectoires est élevé.")
                 max_paths = int(st.session_state.mc_paths)
                 base = [1000, 2000, 5000, 10000, 20000, 50000]
                 counts = [n for n in base if n <= max_paths]
@@ -190,17 +191,31 @@ elif product == "Option Call europeenne":
                     )
                     conv_prices.append(price_n)
                 chart_df = pd.DataFrame(
-                    {"Paths": counts, "MC Price": conv_prices, "BS": [result] * len(counts)}
+                    {"Trajectoires": counts, "Prix MC": conv_prices, "BS": [result] * len(counts)}
                 )
-                st.line_chart(chart_df, x="Paths", y=["MC Price", "BS"], use_container_width=True)
+                y_min = min(min(conv_prices), result)
+                y_max = max(max(conv_prices), result)
+                pad = max((y_max - y_min) * 0.15, 1e-6)
+                y_domain = [y_min - pad, y_max + pad]
+                chart = (
+                    alt.Chart(chart_df)
+                    .transform_fold(["Prix MC", "BS"], as_=["Série", "Prix"])
+                    .mark_line(point=True)
+                    .encode(
+                        x=alt.X("Trajectoires:Q", title="Nombre de trajectoires"),
+                        y=alt.Y("Prix:Q", title="Prix", scale=alt.Scale(domain=y_domain)),
+                        color=alt.Color("Série:N", title=""),
+                    )
+                )
+                st.altair_chart(chart, use_container_width=True)
 
-        st.markdown("**Profil de payoff a maturite**")
+        st.markdown("**Profil de payoff à maturité**")
         prices = [0.5 * spot + i * (spot / 15.0) for i in range(31)]
         payoffs = [max(p - strike, 0.0) for p in prices]
         chart_df = pd.DataFrame({"S_T": prices, "Payoff": payoffs})
         st.line_chart(chart_df, x="S_T", y="Payoff", use_container_width=True)
 
-elif product == "Option Put europeenne":
+elif product == "Option Put européenne":
     strike = st.number_input("Strike K", min_value=0.0001, value=100.0, step=1.0)
     if st.button("Calculer le prix"):
         result = price_put_bs(
@@ -210,8 +225,8 @@ elif product == "Option Put europeenne":
             volatility=volatility,
             maturity=maturity,
         )
-        st.success(f"Prix theorique du put: {result:.6f}")
-        st.info("Decomposition payoff: max(K - S_T, 0).")
+        st.success(f"Prix théorique du put : {result:.6f}")
+        st.info("Décomposition payoff : max(K - S_T, 0).")
 
         if st.session_state.mc_enabled:
             mc_price, mc_se, mc_low, mc_high = price_option_mc_stats(
@@ -229,28 +244,28 @@ elif product == "Option Put europeenne":
             col1, col2, col3 = st.columns(3)
             col1.metric("BS", f"{result:.6f}")
             col2.metric("MC", f"{mc_price:.6f}")
-            col3.metric("Ecart", f"{(mc_price - result):.6f}")
+            col3.metric("Écart", f"{(mc_price - result):.6f}")
             if st.session_state.mc_show_ci:
-                st.caption(f"IC 95% MC: [{mc_low:.6f} ; {mc_high:.6f}] | SE={mc_se:.6f}")
+                st.caption(f"IC 95 % MC : [{mc_low:.6f} ; {mc_high:.6f}] | SE={mc_se:.6f}")
 
             if st.session_state.mc_show_table:
                 table = pd.DataFrame(
                     [
-                        {"Modele": "Black-Scholes", "Prix": result, "SE": "", "IC95%": ""},
+                        {"Modèle": "Black-Scholes", "Prix": result, "SE": "", "IC95%": ""},
                         {
-                            "Modele": "Monte Carlo",
+                            "Modèle": "Monte Carlo",
                             "Prix": mc_price,
                             "SE": mc_se,
                             "IC95%": f"[{mc_low:.6f} ; {mc_high:.6f}]",
                         },
-                        {"Modele": "Ecart MC - BS", "Prix": mc_price - result, "SE": "", "IC95%": ""},
+                        {"Modèle": "Écart MC - BS", "Prix": mc_price - result, "SE": "", "IC95%": ""},
                     ]
                 )
                 st.dataframe(table, use_container_width=True, hide_index=True)
 
             if st.session_state.mc_show_convergence:
                 st.markdown("**Convergence Monte Carlo**")
-                st.caption("Peut prendre du temps si le nombre de trajectoires est eleve.")
+                st.caption("Peut prendre du temps si le nombre de trajectoires est élevé.")
                 max_paths = int(st.session_state.mc_paths)
                 base = [1000, 2000, 5000, 10000, 20000, 50000]
                 counts = [n for n in base if n <= max_paths]
@@ -272,20 +287,34 @@ elif product == "Option Put europeenne":
                     )
                     conv_prices.append(price_n)
                 chart_df = pd.DataFrame(
-                    {"Paths": counts, "MC Price": conv_prices, "BS": [result] * len(counts)}
+                    {"Trajectoires": counts, "Prix MC": conv_prices, "BS": [result] * len(counts)}
                 )
-                st.line_chart(chart_df, x="Paths", y=["MC Price", "BS"], use_container_width=True)
+                y_min = min(min(conv_prices), result)
+                y_max = max(max(conv_prices), result)
+                pad = max((y_max - y_min) * 0.15, 1e-6)
+                y_domain = [y_min - pad, y_max + pad]
+                chart = (
+                    alt.Chart(chart_df)
+                    .transform_fold(["Prix MC", "BS"], as_=["Série", "Prix"])
+                    .mark_line(point=True)
+                    .encode(
+                        x=alt.X("Trajectoires:Q", title="Nombre de trajectoires"),
+                        y=alt.Y("Prix:Q", title="Prix", scale=alt.Scale(domain=y_domain)),
+                        color=alt.Color("Série:N", title=""),
+                    )
+                )
+                st.altair_chart(chart, use_container_width=True)
 
-        st.markdown("**Profil de payoff a maturite**")
+        st.markdown("**Profil de payoff à maturité**")
         prices = [0.5 * spot + i * (spot / 15.0) for i in range(31)]
         payoffs = [max(strike - p, 0.0) for p in prices]
         chart_df = pd.DataFrame({"S_T": prices, "Payoff": payoffs})
         st.line_chart(chart_df, x="S_T", y="Payoff", use_container_width=True)
 
-elif product == "Autocall simplifie":
-    strike_call = st.number_input("Barriere haute / strike call", min_value=0.0001, value=105.0, step=1.0)
-    strike_put = st.number_input("Barriere basse / strike put", min_value=0.0001, value=80.0, step=1.0)
-    coupon_rate = st.number_input("Coupon (ex: 0.08 pour 8%)", min_value=0.0, value=0.08, step=0.01, format="%.4f")
+elif product == "Autocall simplifié":
+    strike_call = st.number_input("Barrière haute / strike call", min_value=0.0001, value=105.0, step=1.0)
+    strike_put = st.number_input("Barrière basse / strike put", min_value=0.0001, value=80.0, step=1.0)
+    coupon_rate = st.number_input("Coupon (ex : 0.08 pour 8 %)", min_value=0.0, value=0.08, step=0.01, format="%.4f")
     nominal = st.number_input("Nominal", min_value=0.01, value=100.0, step=10.0)
 
     if st.button("Calculer le prix"):
@@ -299,7 +328,7 @@ elif product == "Autocall simplifie":
             coupon_rate=coupon_rate,
             nominal=nominal,
         )
-        st.success(f"Prix theorique de l'autocall simplifie: {result:.6f}")
+        st.success(f"Prix théorique de l'autocall simplifié : {result:.6f}")
 
         zc_value = nominal * zero_coupon_price(rate=rate, maturity=maturity)
         digital_call_value = price_digital_call_bs(
@@ -317,13 +346,13 @@ elif product == "Autocall simplifie":
             volatility=volatility,
             maturity=maturity,
         )
-        st.markdown("**Decomposition du prix**")
+        st.markdown("**Décomposition du prix**")
         col1, col2, col3 = st.columns(3)
         col1.metric("Composante ZC", f"{zc_value:.4f}")
         col2.metric("Digitale call", f"{digital_call_value:.4f}")
         col3.metric("Put vendue", f"-{put_sold_cost:.4f}")
 
-        st.markdown("**Profil de payoff simplifie a maturite**")
+        st.markdown("**Profil de payoff simplifié à maturité**")
         prices = [0.5 * spot + i * (spot / 15.0) for i in range(31)]
         payoffs = []
         for p in prices:
@@ -338,5 +367,6 @@ elif product == "Autocall simplifie":
 
 st.divider()
 st.markdown(
-    "Cette interface est un MVP pedagogique. Les resultats sont theoriques et bases sur des hypotheses simplificatrices."
+    "Cette interface est un MVP pédagogique. Les résultats sont théoriques et basés sur des hypothèses simplificatrices."
 )
+```
