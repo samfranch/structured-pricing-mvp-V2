@@ -369,4 +369,3 @@ st.divider()
 st.markdown(
     "Cette interface est un MVP pédagogique. Les résultats sont théoriques et basés sur des hypothèses simplificatrices."
 )
-```
